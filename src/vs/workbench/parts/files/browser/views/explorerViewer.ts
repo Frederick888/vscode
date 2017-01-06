@@ -449,7 +449,15 @@ export class FileController extends DefaultController {
 		tree.DOMFocus();
 
 		// Expand / Collapse
-		tree.toggleExpansion(stat);
+		if (event.altKey) {
+			if (tree.isExpanded(stat)) {
+				tree.collapse(stat, true);
+			} else {
+				this.expand(tree, [stat]);
+			}
+		} else {
+			tree.toggleExpansion(stat);
+		}
 
 		// Allow to unselect
 		if (event.shiftKey && !(stat instanceof NewStatPlaceholder)) {
@@ -476,6 +484,21 @@ export class FileController extends DefaultController {
 		}
 
 		return true;
+	}
+
+	private expand(tree: ITree, stat: FileStat[]) {
+		return tree.expandAll(stat).then(() => {
+			const childs: FileStat[] = [];
+			stat.forEach(s => {
+				if (s.hasChildren) {
+					childs.push(...s.children);
+				}
+			});
+
+			if (childs.length) {
+				return this.expand(tree, childs);
+			}
+		});
 	}
 
 	public onContextMenu(tree: ITree, stat: FileStat, event: ContextMenuEvent): boolean {
